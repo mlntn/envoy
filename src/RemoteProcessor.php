@@ -35,7 +35,7 @@ abstract class RemoteProcessor
         // these lines of output back to the parent callback for display purposes.
         else {
             $cmd = '\\' === DIRECTORY_SEPARATOR
-                 ? 'ssh '.$target.' "'.$task->script.'"'
+                 ? 'ssh '.$target.' "'.$this->fixWindowsQuoting($task->script).'"'
                  : 'echo \''.'set -e'.PHP_EOL.$task->script.'\' | ssh '.$target.' \'bash -se\'';
             $process = new Process(
               $cmd
@@ -43,6 +43,13 @@ abstract class RemoteProcessor
         }
 
         return [$target, $process->setTimeout(null)];
+    }
+
+    protected function fixWindowsQuoting($command)
+    {
+        $md5 = md5('singlequote');
+
+        return str_replace($md5, "'\\\"'\\\"'", str_replace('"', "'", strtr($command, [ "'" => $md5, "\r\n" => ' '])));
     }
 
     /**
